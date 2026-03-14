@@ -1,12 +1,12 @@
 {
   "name": "carecom-cli",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "CLI tool for interacting with Care.com's GraphQL API",
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
     "dev": "bun run src/index.ts",
-    "build": "bun build --compile --minify --define __APP_VERSION__='\"0.1.0\"' src/index.ts --outfile dist/carecom",
+    "build": "bun build --compile --minify --define __APP_VERSION__='\"0.1.2\"' src/index.ts --outfile dist/carecom",
     "type-check": "bunx tsc --noEmit"
   },
   "dependencies": {
