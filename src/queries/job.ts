@@ -130,6 +130,9 @@ export const JOB_APPLICATIONS_QUERY = `
     hourlyRateFrom {
       amount
     }
+    hourlyRateTo {
+      amount
+    }
   }
 `;
 
