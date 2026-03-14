@@ -6,6 +6,7 @@ import { createJobCommand } from './commands/job.ts';
 import { createSearchCommand } from './commands/search.ts';
 import { createNotificationsCommand } from './commands/notifications.ts';
 import { createProfileCommand, createAvailabilityCommand } from './commands/profile.ts';
+import { createMessagesCommand } from './commands/messages.ts';
 
 const program = new Command();
 
@@ -21,6 +22,7 @@ program.addCommand(createSearchCommand());
 program.addCommand(createProfileCommand());
 program.addCommand(createAvailabilityCommand());
 program.addCommand(createNotificationsCommand());
+program.addCommand(createMessagesCommand());
 
 program.parse(process.argv);
 

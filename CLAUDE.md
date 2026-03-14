@@ -38,6 +38,9 @@ bunx tsc --noEmit
 | `job note <id> <text>` | Set private note on an applicant (250 char max). Only visible to seeker. |
 | `search "<query>"` | Semantic caregiver search. Options: `--zip`, `--limit`. Uses Care.com's AI-powered text search. |
 | `profile <uuid>` | Full multi-vertical caregiver profile. Requires UUID (not legacy ID). |
+| `messages` | List all conversations with caregivers. Shows name, preview, timestamp. |
+| `messages read <name>` | Read full message thread. Matches on caregiver name substring, UUID, or channel ID. |
+| `messages send <name> <text>` | Send a message to a caregiver. Same matching as read. |
 | `notifications` | Unread counts for messages, applications, bookings |
 
 All data commands support `--json` for raw API output. This is the primary debugging tool.
@@ -54,6 +57,7 @@ src/
     search.ts           # Caregiver search
     profile.ts          # Full profile view, exports fetchFullProfile()
     notifications.ts    # Notification counts
+    messages.ts         # List conversations, read message threads (uses Stream Chat API)
   queries/
     job.ts              # JobApplications, InterestCounts, JobSetupCC queries + Interest/Note mutations
     search.ts           # SearchProvidersChildCare query
@@ -61,9 +65,10 @@ src/
     notifications.ts    # NotificationCounts query
   lib/
     care-client.ts      # graphql() function. POST to /api/graphql with cookies. Auto-refreshes cookies from Set-Cookie response headers.
+    stream-client.ts    # Stream Chat REST API client. Fetches credentials from messages page HTML.
     config.ts           # Load/save config, requireConfig guard, getJobId/getZip helpers
     curl-parser.ts      # Parse cURL commands to extract cookies
-    formatter.ts        # Table formatting, applicant/profile/search result display
+    formatter.ts        # Table formatting, applicant/profile/search result/message display
 ```
 
 ## Care.com System Architecture
@@ -80,6 +85,31 @@ Care.com uses a micro-frontend architecture. Multiple Next.js apps share a singl
 All MFEs use Apollo Client with the same GraphQL endpoint: `https://www.care.com/api/graphql`
 
 Each MFE has its own Apollo Client instance. The search MFE does NOT expose `window.__APOLLO_CLIENT__` globally, so you need fetch interception to capture its queries.
+
+## Stream Chat (Messaging)
+
+Care.com uses **GetStream.io** (Stream Chat) for messaging, not their GraphQL API. The messages MFE loads Stream credentials via `__NEXT_DATA__` page props.
+
+### How message fetching works
+
+1. Fetch `https://www.care.com/app/messages` HTML with session cookies.
+2. Parse `<script id="__NEXT_DATA__">` JSON for `streamApiKey`, `streamToken`, and `auth.memberUuid`.
+3. Call Stream Chat REST API at `https://chat.stream-io-api.com` with:
+   - Query param: `?api_key={streamApiKey}`
+   - Headers: `Authorization: {streamToken}`, `stream-auth-type: jwt`
+
+### Key endpoints
+
+- `POST /channels` — list/query channels. Body includes `filter_conditions`, `sort`, `limit`, `message_limit`.
+- `POST /channels/messaging/{channelId}/query` — fetch messages in a channel. Body: `{ messages: { limit: 25 } }`.
+
+### Channel ID format
+
+Channel IDs look like `!members-XeGLGvol17U8dXH0yvizF29CEkzJgnsacBdKx5Fr2VU`. The full CID is `messaging:{channelId}`. Conversation IDs from the `JobApplications` query match the full CID format (`messaging:!members-...`).
+
+### Stream token
+
+The `streamToken` is a JWT with `user_id` and `exp` claims. It expires (TTL unknown but likely hours). If the token expires, re-fetch the messages page HTML to get a fresh one. The token is tied to the Care.com session — if the session expires, the messages page returns a redirect.
 
 ## GraphQL API Details
 
