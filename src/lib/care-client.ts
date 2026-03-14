@@ -40,7 +40,7 @@ async function refreshCookies(config: CareComConfig, headers: Headers): Promise<
   }
 
   if (changed) {
-    config.authenticatedAt = new Date().toISOString();
+    config.lastRefreshedAt = new Date().toISOString();
     await saveConfig(config);
   }
 }

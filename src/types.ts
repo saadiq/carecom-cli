@@ -4,6 +4,7 @@ export interface CareComConfig {
   defaultJobId: string;
   defaultZip: string;
   authenticatedAt: string;
+  lastRefreshedAt?: string;
 }
 
 // GraphQL response wrapper
