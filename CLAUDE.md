@@ -64,8 +64,9 @@ src/
     profile.ts          # GetCaregiver query
     notifications.ts    # NotificationCounts query
   lib/
-    care-client.ts      # graphql() function. POST to /api/graphql with cookies. Auto-refreshes cookies from Set-Cookie response headers.
-    stream-client.ts    # Stream Chat REST API client. Fetches credentials from messages page HTML.
+    care-client.ts      # graphql() + exported refreshCookies(). POST to /api/graphql with cookies. Auto-refreshes cookies from Set-Cookie headers.
+    stream-client.ts    # Stream Chat REST API client. Fetches credentials from messages page HTML. Also refreshes cookies.
+    constants.ts        # Shared constants (BROWSER_UA)
     config.ts           # Load/save config, requireConfig guard, getJobId/getZip helpers
     curl-parser.ts      # Parse cURL commands to extract cookies
     formatter.ts        # Table formatting, applicant/profile/search result/message display
@@ -102,6 +103,7 @@ Care.com uses **GetStream.io** (Stream Chat) for messaging, not their GraphQL AP
 
 - `POST /channels` — list/query channels. Body includes `filter_conditions`, `sort`, `limit`, `message_limit`.
 - `POST /channels/messaging/{channelId}/query` — fetch messages in a channel. Body: `{ messages: { limit: 25 } }`.
+- `POST /channels/messaging/{channelId}/message` — send a message. Body: `{ message: { text: "..." } }`.
 
 ### Channel ID format
 
@@ -201,7 +203,7 @@ Care.com uses cookie-based auth from browser sessions. There are no API tokens.
 
 ### Cookie refresh
 
-The `graphql()` function in `care-client.ts` reads `Set-Cookie` headers from every API response and merges updated cookies back into the config file. This mirrors how browsers keep sessions alive. Each CLI call extends the session, just like each page load does in Chrome.
+Both `graphql()` in `care-client.ts` and `getStreamCredentials()` in `stream-client.ts` read `Set-Cookie` headers from responses and merge updated cookies back into the config file. This mirrors how browsers keep sessions alive. Each CLI call (including message commands) extends the session, just like each page load does in Chrome.
 
 ### Session keep-alive
 
