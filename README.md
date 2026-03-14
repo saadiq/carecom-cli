@@ -1,6 +1,8 @@
-# carecom-cli
+# Care.com CLI
 
-CLI tool for managing a Care.com job listing. Monitor applicants, read/send messages, search for caregivers, and view profiles — all from the terminal.
+Unofficial CLI tool for managing a Care.com job listing. Monitor applicants, read/send messages, search for caregivers, and view profiles — all from the terminal.
+
+> **Disclaimer:** This is an unofficial, personal project and is not affiliated with, endorsed by, or supported by Care.com.
 
 ## Install
 
