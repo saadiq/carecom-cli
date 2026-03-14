@@ -1,5 +1,6 @@
 import type { CareComConfig } from '../types.ts';
 import { cookiesToHeader } from './curl-parser.ts';
+import { refreshCookies } from './care-client.ts';
 import { BROWSER_UA } from './constants.ts';
 
 const MESSAGES_URL = 'https://www.care.com/app/messages';
@@ -26,6 +27,8 @@ export async function getStreamCredentials(config: CareComConfig): Promise<Strea
     redirect: 'follow',
   });
 
+  await refreshCookies(config, response.headers);
+
   if (response.status === 401 || response.status === 403) {
     throw new Error('Session expired. Re-run: carecom auth parse-curl');
   }
@@ -40,17 +43,22 @@ export async function getStreamCredentials(config: CareComConfig): Promise<Strea
     throw new Error('Could not find __NEXT_DATA__ on messages page');
   }
 
-  const nextData = JSON.parse(match[1]);
-  const { streamApiKey, streamToken, auth } = nextData.props;
+  let nextData: any;
+  try {
+    nextData = JSON.parse(match[1]);
+  } catch {
+    throw new Error('Failed to parse __NEXT_DATA__ from messages page. Page structure may have changed.');
+  }
 
-  if (!streamApiKey || !streamToken) {
+  const props = nextData?.props;
+  if (!props?.streamApiKey || !props?.streamToken || !props?.auth?.memberUuid) {
     throw new Error('Stream credentials missing from messages page. Session may be expired.');
   }
 
   return {
-    apiKey: streamApiKey,
-    token: streamToken,
-    userId: auth.memberUuid,
+    apiKey: props.streamApiKey,
+    token: props.streamToken,
+    userId: props.auth.memberUuid,
   };
 }
 

@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import ora from 'ora';
 import chalk from 'chalk';
 import { loadConfig, requireConfig } from '../lib/config.ts';
+import type { CareComConfig } from '../types.ts';
 import { getStreamCredentials, listConversations, getChannelMessages, sendMessage, getOtherMember } from '../lib/stream-client.ts';
 import { formatConversationList, formatMessageThread } from '../lib/formatter.ts';
 
@@ -14,8 +15,7 @@ function findChannel(channels: any[], nameOrId: string, myUserId: string) {
   });
 }
 
-async function resolveConversation(nameOrId: string, spinner: ReturnType<typeof ora>) {
-  const config = requireConfig(await loadConfig());
+async function resolveConversation(config: CareComConfig, nameOrId: string, spinner: ReturnType<typeof ora>) {
   const creds = await getStreamCredentials(config);
   const channels = await listConversations(creds, 30);
   const match = findChannel(channels, nameOrId, creds.userId);
@@ -56,9 +56,10 @@ async function handleListConversations(options: any): Promise<void> {
 }
 
 async function handleReadConversation(nameOrId: string, options: any): Promise<void> {
+  const config = requireConfig(await loadConfig());
   const spinner = ora('Fetching conversations...').start();
   try {
-    const { creds, channel, otherName } = await resolveConversation(nameOrId, spinner);
+    const { creds, channel, otherName } = await resolveConversation(config, nameOrId, spinner);
     spinner.text = `Loading messages with ${otherName}...`;
 
     const channelData = await getChannelMessages(creds, channel.channel.id, options.limit || 25);
@@ -77,9 +78,10 @@ async function handleReadConversation(nameOrId: string, options: any): Promise<v
 }
 
 async function handleSendMessage(nameOrId: string, text: string, options: any): Promise<void> {
+  const config = requireConfig(await loadConfig());
   const spinner = ora('Finding conversation...').start();
   try {
-    const { creds, channel, otherName } = await resolveConversation(nameOrId, spinner);
+    const { creds, channel, otherName } = await resolveConversation(config, nameOrId, spinner);
     spinner.text = `Sending message to ${otherName}...`;
 
     const result = await sendMessage(creds, channel.channel.id, text);

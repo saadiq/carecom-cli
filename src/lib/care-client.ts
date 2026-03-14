@@ -25,7 +25,7 @@ function parseSetCookies(headers: Headers): Record<string, string> {
 }
 
 // Refresh stored cookies with any Set-Cookie headers from the response
-async function refreshCookies(config: CareComConfig, headers: Headers): Promise<void> {
+export async function refreshCookies(config: CareComConfig, headers: Headers): Promise<void> {
   const updates = parseSetCookies(headers);
   if (Object.keys(updates).length === 0) return;
 
