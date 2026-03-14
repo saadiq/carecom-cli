@@ -60,20 +60,22 @@ carecom auth set-defaults --job-id <your-job-id> --zip <your-zip>
 carecom job                              # Job summary
 carecom job applicants                   # List all applicants
 carecom job applicants --filter interested  # Filter by interest status
-carecom job applicant "Gertrude"          # Full profile (match by name, UUID prefix, or legacy ID)
+carecom job applicant "Gertrude"         # Look up by name
+carecom job applicant 5a3b               # ...or UUID prefix
+carecom job applicant 12345678           # ...or legacy ID
 carecom job interest "Gertrude" interested   # Mark as interested
-carecom job note "Gertrude" "Great fit"   # Add private note (250 char max)
+carecom job note "Gertrude" "Great fit"  # Add private note (250 char max)
 ```
 
 ### Messages
 
 ```bash
 carecom messages                         # List all conversations
-carecom messages read "Gertrude"          # Read message thread
-carecom messages send "Gertrude" "Hi!"    # Send a message
+carecom messages read "Gertrude"         # Read thread (by name, UUID, or channel ID)
+carecom messages send "Gertrude" "Hi!"   # Send a message
 ```
 
-Name matching works with partial names, member UUID prefixes, or channel IDs.
+Anywhere you see a name, you can also use a UUID prefix, legacy ID, or channel ID.
 
 ### Search & Profiles
 
