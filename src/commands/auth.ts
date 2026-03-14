@@ -7,6 +7,15 @@ import { graphql } from '../lib/care-client.ts';
 import { NOTIFICATION_COUNTS_QUERY } from '../queries/notifications.ts';
 import type { CareComConfig } from '../types.ts';
 
+async function isSessionActive(config: CareComConfig): Promise<boolean> {
+  try {
+    await graphql(config, 'NotificationCounts', NOTIFICATION_COUNTS_QUERY);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function readInteractiveInput(prompt: string): Promise<string> {
   console.log(chalk.cyan(prompt));
   console.log(chalk.gray('(Paste your cURL command, then press Enter when done)\n'));
@@ -104,8 +113,12 @@ async function handleStatus(): Promise<void> {
   const hours = Math.floor(authAge / (1000 * 60 * 60));
   const minutes = Math.floor((authAge % (1000 * 60 * 60)) / (1000 * 60));
 
+  const spinner = ora('Checking session...').start();
+  const sessionActive = await isSessionActive(config);
+  spinner.stop();
+
   console.log(chalk.bold('\nCare.com Auth Status\n'));
-  console.log(`  Authenticated: ${chalk.green('Yes')}`);
+  console.log(`  Session: ${sessionActive ? chalk.green('active') : chalk.red('expired — run: carecom auth parse-curl')}`);
   console.log(`  Auth age: ${hours}h ${minutes}m`);
   if (config.lastRefreshedAt) {
     const refreshAge = Date.now() - new Date(config.lastRefreshedAt).getTime();
@@ -140,16 +153,15 @@ async function handlePing(options: any): Promise<void> {
     process.exit(1);
   }
 
-  try {
-    await graphql(config, 'NotificationCounts', NOTIFICATION_COUNTS_QUERY);
+  if (await isSessionActive(config)) {
     if (!options.quiet) {
       const ts = config.lastRefreshedAt || config.authenticatedAt;
       const age = Date.now() - new Date(ts).getTime();
       const mins = Math.floor(age / (1000 * 60));
       console.log(`Session alive. Last refresh: ${mins}m ago.`);
     }
-  } catch (err: any) {
-    console.error(`Session dead: ${err.message}`);
+  } else {
+    console.error('Session dead.');
     process.exit(1);
   }
 }
