@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+bun.lockb
+
+# Build output
+dist/
+*.tsbuildinfo
+*.bun-build
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+
+# Environment & Credentials
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
