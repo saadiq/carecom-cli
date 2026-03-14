@@ -147,9 +147,17 @@ export function formatAvailability(slots: any[]): string {
   }
 
   return groups.map(g => {
-    const dayStr = g.days.length > 2
-      ? `${g.days[0]}-${g.days[g.days.length - 1]}`
-      : g.days.join(', ');
+    let dayStr: string;
+    if (g.days.length > 2) {
+      // Only use range notation if days are truly consecutive
+      const firstIdx = dayOrder.indexOf(g.days[0]);
+      const isConsecutive = g.days.every((d, i) => dayOrder.indexOf(d) === firstIdx + i);
+      dayStr = isConsecutive
+        ? `${g.days[0]}-${g.days[g.days.length - 1]}`
+        : g.days.join(', ');
+    } else {
+      dayStr = g.days.join(', ');
+    }
     return `${dayStr}: ${g.start} - ${g.end}`;
   }).join('\n  ');
 }
