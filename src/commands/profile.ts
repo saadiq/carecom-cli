@@ -8,7 +8,7 @@ import { GET_CAREGIVER_QUERY, GET_AVAILABILITY_QUERY } from '../queries/profile.
 import { formatFullProfile, formatAvailability } from '../lib/formatter.ts';
 
 function looksLikeUUID(id: string): boolean {
-  return id.includes('-') || id.length > 20;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 }
 
 function requireUUID(id: string): void {
