@@ -117,7 +117,6 @@ export async function performUpdate(): Promise<void> {
     renameSync(execPath, backupPath);
     renameSync(tmpPath, execPath);
     chmodSync(execPath, 0o755);
-    unlinkSync(backupPath);
     spinner.succeed(`Updated ${current} → ${release.version}`);
   } catch (err: unknown) {
     const error = err as NodeJS.ErrnoException;
@@ -128,5 +127,7 @@ export async function performUpdate(): Promise<void> {
     }
     try { renameSync(backupPath, execPath); } catch {}
     try { unlinkSync(tmpPath); } catch {}
+    return;
   }
+  try { unlinkSync(backupPath); } catch {}
 }

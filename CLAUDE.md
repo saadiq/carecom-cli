@@ -76,6 +76,7 @@ src/
     profile.ts          # Full profile view, exports fetchFullProfile()
     notifications.ts    # Notification counts
     messages.ts         # List conversations, read message threads (uses Stream Chat API)
+    update.ts           # Self-update and update check commands
   queries/
     job.ts              # JobApplications, InterestCounts, JobSetupCC queries + Interest/Note mutations
     search.ts           # SearchProvidersChildCare query
@@ -88,6 +89,7 @@ src/
     config.ts           # Load/save config, requireConfig guard, getJobId/getZip helpers
     curl-parser.ts      # Parse cURL commands to extract cookies
     formatter.ts        # Table formatting, applicant/profile/search result/message display
+    updater.ts          # GitHub release fetch, version comparison, binary self-update
 ```
 
 ## Care.com System Architecture
