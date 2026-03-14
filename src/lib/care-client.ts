@@ -1,10 +1,9 @@
 import type { CareComConfig, GraphQLResponse } from '../types.ts';
 import { cookiesToHeader } from './curl-parser.ts';
 import { saveConfig } from './config.ts';
+import { BROWSER_UA } from './constants.ts';
 
 const GRAPHQL_URL = 'https://www.care.com/api/graphql';
-
-const BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36';
 
 // Parse Set-Cookie headers and merge updated cookies into config
 function parseSetCookies(headers: Headers): Record<string, string> {
