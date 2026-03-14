@@ -96,22 +96,32 @@ export async function performUpdate(): Promise<void> {
     return;
   }
 
-  spinner.text = `Downloading ${release.version}...`;
-  const res = await fetch(asset.browser_download_url, {
-    headers: { 'User-Agent': 'carecom-cli' },
-    signal: AbortSignal.timeout(60_000),
-  });
-  if (!res.ok) {
-    spinner.fail(`Download failed: ${res.status} ${res.statusText}`);
-    return;
-  }
+  let binary: ArrayBuffer;
+  try {
+    spinner.text = `Downloading ${release.version}...`;
+    const res = await fetch(asset.browser_download_url, {
+      headers: { 'User-Agent': 'carecom-cli' },
+      signal: AbortSignal.timeout(120_000),
+    });
+    if (!res.ok) {
+      spinner.fail(`Download failed: ${res.status} ${res.statusText}`);
+      return;
+    }
 
-  const expectedBytes = Number(res.headers.get('content-length') || 0);
-  if (expectedBytes > 0) spinner.text = `Downloading ${release.version} (${(expectedBytes / 1_048_576).toFixed(0)} MB)...`;
+    const expectedBytes = Number(res.headers.get('content-length') || 0);
+    if (expectedBytes > 0) spinner.text = `Downloading ${release.version} (${(expectedBytes / 1_048_576).toFixed(0)} MB)...`;
 
-  const binary = await res.arrayBuffer();
-  if (expectedBytes > 0 && binary.byteLength !== expectedBytes) {
-    spinner.fail(`Download incomplete: got ${binary.byteLength} of ${expectedBytes} bytes.`);
+    binary = await res.arrayBuffer();
+    if (expectedBytes > 0 && binary.byteLength !== expectedBytes) {
+      spinner.fail(`Download incomplete: got ${binary.byteLength} of ${expectedBytes} bytes.`);
+      return;
+    }
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'TimeoutError') {
+      spinner.fail('Download timed out.');
+    } else {
+      spinner.fail(`Download failed: ${(err as Error).message}`);
+    }
     return;
   }
 
