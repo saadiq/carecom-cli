@@ -162,6 +162,86 @@ export function formatAvailability(slots: any[]): string {
   }).join('\n  ');
 }
 
+function formatMessageTime(isoDate: string): string {
+  const d = new Date(isoDate);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+
+  const time = d.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'America/New_York',
+  });
+
+  if (isToday) return time;
+  if (isYesterday) return `Yesterday ${time}`;
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'America/New_York',
+  }) + ` ${time}`;
+}
+
+export function formatConversationList(channels: any[], myUserId: string): string {
+  const lines = ['\n'];
+  for (const ch of channels) {
+    const other = ch.members?.find((m: any) => m.user_id !== myUserId);
+    const name = other?.user?.name || 'Unknown';
+    const lastMsg = ch.messages?.[0];
+    const time = lastMsg ? formatMessageTime(lastMsg.created_at) : '';
+    const preview = lastMsg?.text?.substring(0, 80) || '';
+
+    lines.push(`  ${chalk.bold(name)}  ${chalk.dim(time)}`);
+    lines.push(`  ${chalk.dim(preview)}${preview.length >= 80 ? '...' : ''}`);
+    lines.push(`  ${chalk.dim(`cid: ${ch.channel.id}`)}`);
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
+export function formatMessageThread(channelData: any, myUserId: string, otherName: string): string {
+  const messages = channelData.messages || [];
+  if (messages.length === 0) return '\nNo messages in this conversation.\n';
+
+  const lines = ['\n'];
+  let lastDate = '';
+
+  for (const msg of messages) {
+    const d = new Date(msg.created_at);
+    const dateStr = d.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'America/New_York',
+    });
+
+    if (dateStr !== lastDate) {
+      lines.push(`  ${chalk.dim(`--- ${dateStr} ---`)}`);
+      lastDate = dateStr;
+    }
+
+    const time = d.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: 'America/New_York',
+    });
+    const isMe = msg.user?.id === myUserId;
+    const sender = isMe ? chalk.green('You') : chalk.cyan(otherName);
+
+    lines.push(`  ${sender}  ${chalk.dim(time)}`);
+    // Wrap long messages
+    const text = msg.text || '';
+    const wrapped = text.split('\n').map((line: string) => `    ${line}`).join('\n');
+    lines.push(wrapped);
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
 export function formatSearchResult(result: any, index: number): string {
   const lines = [
     chalk.bold(`${index + 1}. ${result.displayName || 'Unknown'}`),
