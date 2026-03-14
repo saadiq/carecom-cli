@@ -2,6 +2,22 @@
 
 CLI tool for interacting with Care.com's GraphQL API. Used for monitoring a nanny job listing, evaluating applicants, and searching for caregivers.
 
+## Installation
+
+```bash
+curl -sL https://raw.githubusercontent.com/saadiq/carecom-cli/main/install.sh | bash
+```
+
+Installs to `~/.local/bin/carecom`. Set `INSTALL_DIR` to override. macOS ARM64 only.
+
+## Releasing
+
+```bash
+git tag v0.2.0 && git push --tags
+```
+
+GitHub Actions builds the binary and creates a release. The `update` command fetches from these releases.
+
 ## How the CLI Works
 
 TypeScript project running on Bun. Uses `commander` for CLI structure, `chalk` for colored output, and `ora` for spinners.
@@ -42,6 +58,8 @@ bunx tsc --noEmit
 | `messages read <name>` | Read full message thread. Matches on caregiver name substring, UUID, or channel ID. |
 | `messages send <name> <text>` | Send a message to a caregiver. Same matching as read. |
 | `notifications` | Unread counts for messages, applications, bookings |
+| `update` | Self-update to the latest GitHub release |
+| `update check` | Check if a newer version is available |
 
 All data commands support `--json` for raw API output. This is the primary debugging tool.
 
