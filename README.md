@@ -2,21 +2,31 @@
 
 CLI tool for managing a Care.com job listing. Monitor applicants, read/send messages, search for caregivers, and view profiles — all from the terminal.
 
-## Prerequisites
-
-- [Bun](https://bun.sh) >= 1.0
-- An active Care.com seeker account with a job listing
-
-## Setup
+## Install
 
 ```bash
-git clone <repo-url> && cd carecom-cli
-bun install
+curl -sL https://raw.githubusercontent.com/saadiq/carecom-cli/main/install.sh | bash
 ```
 
-### Authentication
+Requires macOS on Apple Silicon. Installs to `~/.local/bin/carecom` (override with `INSTALL_DIR`).
 
-Care.com uses cookie-based auth. You'll need to grab cookies from a browser session:
+<details>
+<summary>Install from source</summary>
+
+Requires [Bun](https://bun.sh) >= 1.0.
+
+```bash
+git clone https://github.com/saadiq/carecom-cli.git && cd carecom-cli
+bun install
+bun run build
+# Binary at dist/carecom — move it to your PATH
+```
+
+</details>
+
+## Authentication
+
+Care.com uses cookie-based auth. Grab cookies from a browser session:
 
 1. Open [care.com](https://www.care.com) and log in
 2. Open Chrome DevTools (F12) > Network tab
@@ -25,33 +35,24 @@ Care.com uses cookie-based auth. You'll need to grab cookies from a browser sess
 5. Run:
 
 ```bash
-bun run dev -- auth parse-curl
+carecom auth parse-curl
 ```
 
-Paste the cURL command when prompted. The CLI will extract cookies, test the session, and store credentials at `~/.config/carecom/config.json`.
+Paste the cURL command when prompted. The CLI extracts cookies, tests the session, and stores credentials at `~/.config/carecom/config.json`.
 
 Sessions expire after inactivity (30 min to 2 hours). Keep one alive with:
 
 ```bash
-bun run dev -- auth ping
+carecom auth ping
 ```
 
 ### Set defaults
 
 ```bash
-bun run dev -- auth set-defaults --job-id <your-job-id> --zip <your-zip>
+carecom auth set-defaults --job-id <your-job-id> --zip <your-zip>
 ```
 
 ## Usage
-
-```bash
-# Run in dev mode
-bun run dev -- <command>
-
-# Or build a standalone binary
-bun run build
-./dist/carecom <command>
-```
 
 ### Job & Applicants
 
@@ -59,17 +60,17 @@ bun run build
 carecom job                              # Job summary
 carecom job applicants                   # List all applicants
 carecom job applicants --filter interested  # Filter by interest status
-carecom job applicant "Shanyce"          # Full profile (match by name, UUID prefix, or legacy ID)
-carecom job interest "Shanyce" interested   # Mark as interested
-carecom job note "Shanyce" "Great fit"   # Add private note (250 char max)
+carecom job applicant "Gertrude"          # Full profile (match by name, UUID prefix, or legacy ID)
+carecom job interest "Gertrude" interested   # Mark as interested
+carecom job note "Gertrude" "Great fit"   # Add private note (250 char max)
 ```
 
 ### Messages
 
 ```bash
 carecom messages                         # List all conversations
-carecom messages read "Shanyce"          # Read message thread
-carecom messages send "Shanyce" "Hi!"    # Send a message
+carecom messages read "Gertrude"          # Read message thread
+carecom messages send "Gertrude" "Hi!"    # Send a message
 ```
 
 Name matching works with partial names, member UUID prefixes, or channel IDs.
@@ -88,6 +89,8 @@ carecom profile <uuid>                   # Full multi-vertical caregiver profile
 ```bash
 carecom notifications                    # Unread counts
 carecom auth status                      # Session info
+carecom update                           # Self-update to latest release
+carecom update check                     # Check for available updates
 ```
 
 ### Flags
@@ -96,7 +99,7 @@ All data commands support `--json` for raw API output:
 
 ```bash
 carecom job applicants --json
-carecom messages read "Shanyce" --json
+carecom messages read "Gertrude" --json
 ```
 
 ## How it works
@@ -116,13 +119,21 @@ bun run build                # Compile standalone binary
 bunx tsc --noEmit            # Type check
 ```
 
-Project structure:
+### Releasing
+
+```bash
+git tag v0.2.0 && git push --tags
+```
+
+GitHub Actions builds the binary and publishes a GitHub Release. Installed binaries pick up new versions via `carecom update`.
+
+### Project structure
 
 ```
 src/
   index.ts           # CLI entry point
   types.ts           # TypeScript interfaces
-  commands/          # Command handlers (auth, job, search, profile, messages, notifications)
+  commands/          # Command handlers (auth, job, search, profile, messages, notifications, update)
   queries/           # GraphQL query strings
-  lib/               # Shared utilities (API clients, config, formatting)
+  lib/               # Shared utilities (API clients, config, formatting, updater)
 ```
