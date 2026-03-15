@@ -3,7 +3,7 @@ import ora from 'ora';
 import chalk from 'chalk';
 import { loadConfig, saveConfig } from '../lib/config.ts';
 import { parseCurlCommand, looksLikeCurlCommand } from '../lib/curl-parser.ts';
-import { graphql } from '../lib/care-client.ts';
+import { graphql, refreshSession } from '../lib/care-client.ts';
 import { NOTIFICATION_COUNTS_QUERY } from '../queries/notifications.ts';
 import type { CareComConfig } from '../types.ts';
 
@@ -151,6 +151,14 @@ async function handlePing(options: any): Promise<void> {
   if (!config) {
     console.error('Not authenticated. Run: carecom auth parse-curl');
     process.exit(1);
+  }
+
+  // Hit a real page first to refresh Akamai bot management cookies,
+  // then verify with a GraphQL query
+  try {
+    await refreshSession(config);
+  } catch {
+    // Page refresh failed, still try the GraphQL check
   }
 
   if (await isSessionActive(config)) {
