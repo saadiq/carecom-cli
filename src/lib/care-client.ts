@@ -4,6 +4,8 @@ import { saveConfig } from './config.ts';
 import { BROWSER_UA } from './constants.ts';
 
 const GRAPHQL_URL = 'https://www.care.com/api/graphql';
+const MFE_CLIENT_NAME = 'job-mfe';
+const MFE_CLIENT_VERSION = '0.525.0';
 
 // Parse Set-Cookie headers and merge updated cookies into config
 function parseSetCookies(headers: Headers): Record<string, string> {
@@ -50,15 +52,24 @@ export async function graphql<T = any>(
   query: string,
   variables: Record<string, any> = {}
 ): Promise<T> {
+  const headers: Record<string, string> = {
+    'Cookie': cookiesToHeader(config.cookies),
+    'Content-Type': 'application/json',
+    'Origin': 'https://www.care.com',
+    'Referer': 'https://www.care.com/',
+    'User-Agent': BROWSER_UA,
+    'apollographql-client-name': MFE_CLIENT_NAME,
+    'apollographql-client-version': MFE_CLIENT_VERSION,
+  };
+
+  // Browser sends the vc cookie as the x-care.com-visitid header
+  if (config.cookies['vc']) {
+    headers['x-care.com-visitid'] = config.cookies['vc'];
+  }
+
   const response = await fetch(GRAPHQL_URL, {
     method: 'POST',
-    headers: {
-      'Cookie': cookiesToHeader(config.cookies),
-      'Content-Type': 'application/json',
-      'Origin': 'https://www.care.com',
-      'Referer': 'https://www.care.com/',
-      'User-Agent': BROWSER_UA,
-    },
+    headers,
     body: JSON.stringify({ operationName, query, variables }),
   });
 
