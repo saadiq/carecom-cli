@@ -1,6 +1,6 @@
 {
   "name": "carecom-cli",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "CLI tool for interacting with Care.com's GraphQL API",
   "main": "src/index.ts",
   "type": "module",
