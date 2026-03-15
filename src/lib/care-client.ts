@@ -99,3 +99,24 @@ export async function graphql<T = any>(
 
   return json.data;
 }
+
+// Hit a real page URL to refresh Akamai bot management cookies (bm_sv, ak_bmsc).
+// The browser does this naturally via page navigation; API-only requests don't renew them.
+export async function refreshSession(config: CareComConfig): Promise<void> {
+  const jobId = config.defaultJobId || '35088345';
+  const pageUrl = `https://www.care.com/app/job/cc/view/${jobId}`;
+
+  const response = await fetch(pageUrl, {
+    headers: {
+      'Cookie': cookiesToHeader(config.cookies),
+      'User-Agent': BROWSER_UA,
+      'Accept': 'text/html',
+    },
+  });
+
+  await refreshCookies(config, response.headers);
+
+  if (response.status === 401 || response.status === 403) {
+    throw new Error('Session expired. Re-run: carecom auth parse-curl');
+  }
+}
