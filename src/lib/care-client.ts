@@ -114,9 +114,15 @@ export async function refreshSession(config: CareComConfig): Promise<void> {
     },
   });
 
+  // Consume response body to release the connection
+  await response.arrayBuffer();
   await refreshCookies(config, response.headers);
 
   if (response.status === 401 || response.status === 403) {
     throw new Error('Session expired. Re-run: carecom auth parse-curl');
+  }
+
+  if (!response.ok) {
+    throw new Error(`Session refresh failed: HTTP ${response.status}`);
   }
 }
