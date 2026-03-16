@@ -14,7 +14,7 @@ const INTEREST_STATUS_MAP: Record<string, string> = {
   'unspecified': 'UNSPECIFIED',
 };
 
-async function resolveApplicant(config: CareComConfig, jobId: string, applicantId: string) {
+export async function resolveApplicant(config: CareComConfig, jobId: string, applicantId: string) {
   const data = await graphql(config, 'JobApplications', JOB_APPLICATIONS_QUERY, {
     jobId,
     sortBy: 'RECENCY',
