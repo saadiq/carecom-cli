@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun run src/index.ts",
-    "build": "bun build --compile --minify --define __APP_VERSION__='\"0.1.2\"' src/index.ts --outfile dist/carecom",
+    "build": "bun build --compile --minify --define \"__APP_VERSION__='$(node -p \"require('./package.json').version\")'\" src/index.ts --outfile dist/carecom",
     "type-check": "bunx tsc --noEmit"
   },
   "dependencies": {
