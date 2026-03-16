@@ -12,9 +12,10 @@ function looksLikeUUID(id: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 }
 
-async function resolveUUID(config: CareComConfig, id: string, jobId: string): Promise<string> {
+async function resolveUUID(config: CareComConfig, id: string, options: any): Promise<string> {
   if (looksLikeUUID(id)) return id;
 
+  const jobId = getJobId(options.jobId, config);
   const match = await resolveApplicant(config, jobId, id);
   if (!match) {
     console.error(`No applicant found matching "${id}"`);
@@ -53,12 +54,10 @@ export function createProfileCommand(): Command {
     .option('--job-id <id>', 'Job ID (for resolving non-UUID identifiers)')
     .action(async (id, options) => {
       const config = requireConfig(await loadConfig());
-      const jobId = getJobId(options.jobId, config);
 
-      const spinner = ora('Resolving...').start();
-      const resolvedId = await resolveUUID(config, id, jobId);
+      const spinner = ora('Fetching profile...').start();
+      const resolvedId = await resolveUUID(config, id, options);
 
-      spinner.text = 'Fetching profile...';
       try {
         const fetches: Promise<any>[] = [fetchFullProfile(config, resolvedId)];
         if (options.availability) fetches.push(fetchAvailability(config, resolvedId));
@@ -104,12 +103,10 @@ export function createAvailabilityCommand(): Command {
     .option('--job-id <id>', 'Job ID (for resolving non-UUID identifiers)')
     .action(async (id, options) => {
       const config = requireConfig(await loadConfig());
-      const jobId = getJobId(options.jobId, config);
 
-      const spinner = ora('Resolving...').start();
-      const resolvedId = await resolveUUID(config, id, jobId);
+      const spinner = ora('Fetching availability...').start();
+      const resolvedId = await resolveUUID(config, id, options);
 
-      spinner.text = 'Fetching availability...';
       try {
         const data = await fetchAvailability(config, resolvedId);
         const availability = data.AvailabilityCalendar?.availability || [];
