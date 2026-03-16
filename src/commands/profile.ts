@@ -1,22 +1,33 @@
 import { Command } from 'commander';
 import ora from 'ora';
 import chalk from 'chalk';
-import { loadConfig, requireConfig } from '../lib/config.ts';
+import { loadConfig, requireConfig, getJobId } from '../lib/config.ts';
 import type { CareComConfig } from '../types.ts';
 import { graphql } from '../lib/care-client.ts';
 import { GET_CAREGIVER_QUERY, GET_AVAILABILITY_QUERY } from '../queries/profile.ts';
 import { formatFullProfile, formatAvailability } from '../lib/formatter.ts';
+import { resolveApplicant } from './job.ts';
 
 function looksLikeUUID(id: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 }
 
-function requireUUID(id: string): void {
-  if (!looksLikeUUID(id)) {
-    console.error(`"${id}" looks like a legacy ID, not a UUID.`);
-    console.error('Use the full UUID from "job applicants" or "search" output.');
+async function resolveUUID(config: CareComConfig, id: string, jobId: string): Promise<string> {
+  if (looksLikeUUID(id)) return id;
+
+  const match = await resolveApplicant(config, jobId, id);
+  if (!match) {
+    console.error(`No applicant found matching "${id}"`);
     process.exit(1);
   }
+  const uuid = match.node?.applicant?.member?.id;
+  if (!uuid) {
+    console.error(`Matched applicant but could not extract UUID`);
+    process.exit(1);
+  }
+  const name = match.node?.applicant?.member?.displayName || id;
+  console.log(chalk.dim(`Resolved "${id}" → ${name} (${uuid})`));
+  return uuid;
 }
 
 export async function fetchFullProfile(config: CareComConfig, memberUUID: string) {
@@ -35,18 +46,22 @@ export async function fetchAvailability(config: CareComConfig, memberUUID: strin
 
 export function createProfileCommand(): Command {
   const profile = new Command('profile')
-    .description('View full caregiver profile by UUID')
-    .argument('<uuid>', 'Caregiver member UUID (from applicants or search results)')
+    .description('View full caregiver profile by UUID, prefix, or name')
+    .argument('<id>', 'UUID, UUID prefix, legacy ID, or name substring')
     .option('--json', 'Output raw JSON')
     .option('--availability', 'Include availability calendar')
+    .option('--job-id <id>', 'Job ID (for resolving non-UUID identifiers)')
     .action(async (id, options) => {
       const config = requireConfig(await loadConfig());
-      requireUUID(id);
+      const jobId = getJobId(options.jobId, config);
 
-      const spinner = ora('Fetching profile...').start();
+      const spinner = ora('Resolving...').start();
+      const resolvedId = await resolveUUID(config, id, jobId);
+
+      spinner.text = 'Fetching profile...';
       try {
-        const fetches: Promise<any>[] = [fetchFullProfile(config, id)];
-        if (options.availability) fetches.push(fetchAvailability(config, id));
+        const fetches: Promise<any>[] = [fetchFullProfile(config, resolvedId)];
+        if (options.availability) fetches.push(fetchAvailability(config, resolvedId));
 
         const results = await Promise.all(fetches);
         const caregiver = results[0].getCaregiver;
@@ -84,15 +99,19 @@ export function createProfileCommand(): Command {
 export function createAvailabilityCommand(): Command {
   const avail = new Command('availability')
     .description('View caregiver availability calendar')
-    .argument('<uuid>', 'Caregiver member UUID')
+    .argument('<id>', 'UUID, UUID prefix, legacy ID, or name substring')
     .option('--json', 'Output raw JSON')
+    .option('--job-id <id>', 'Job ID (for resolving non-UUID identifiers)')
     .action(async (id, options) => {
       const config = requireConfig(await loadConfig());
-      requireUUID(id);
+      const jobId = getJobId(options.jobId, config);
 
-      const spinner = ora('Fetching availability...').start();
+      const spinner = ora('Resolving...').start();
+      const resolvedId = await resolveUUID(config, id, jobId);
+
+      spinner.text = 'Fetching availability...';
       try {
-        const data = await fetchAvailability(config, id);
+        const data = await fetchAvailability(config, resolvedId);
         const availability = data.AvailabilityCalendar?.availability || [];
         spinner.succeed('Availability loaded');
 
